@@ -6,14 +6,18 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$env
 )
-function switchEasEnv($path, $new_env) {
+
+function switchEasEnv($path, $new_env, $old_env) {
     $eas_content = Get-Content $($path + "ateas.properties")
     $eas_content_new = ""
     foreach ($line in $eas_content) {
-        if (($line -contains $new_env) -and !($line -contains "server")) {
+
+        if (($line.Contains($new_env)) -and !($line.Contains("server"))) {
             $line = $line.Replace("#", "")
+        } elseif (($line.Contains($old_env)) -and !($line.Contains("server"))) {
+            $line = $line.Insert(0, "#")
         }
-        $eas_content_new += $line
+        $eas_content_new += $($line + "`r`n")
     }
     $eas_content_new > $($path + "ateas.properties") 
 }
@@ -61,7 +65,6 @@ function rollback($profile_path) {
 # Switches the properties files in order to change local Atvantage or Easweb environments
 $profile_path = "C:\Projects\IBM\WebSphere\AppServer\profiles\"
 $atvantage = "atvantage.properties"
-$easWeb = "ateas.properties"
 $bin = "bin\"
 
 switch ($branch) {

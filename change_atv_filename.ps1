@@ -13,6 +13,24 @@ function switchEasEnv($path, $new_env, $old_env) {
     $eas_content_new > $($path + "ateas.properties") 
 }
 
+function switchAtlantechEnv($new_env, $old_env) {
+    if ($new_env -eq "dev") {
+        $new_env = "test"
+    }
+    if ($old_env -eq "dev") {
+        $old_env = "test"
+    }
+
+    $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
+    $ini_file[1] = $ini_file[1].Replace($old_env, $new_env)
+
+    $ini_file_new = ""
+    foreach ($line in $ini_file) {
+        $ini_file_new += $($line + "`r`n")
+    }
+    $ini_file_new > "C:\Apps\EAS Acpt\Atlantech.ini"
+}
+
 function backupFiles($profile_path) {
     mkdir $($profile_path + "backup") | Out-Null
     Copy-Item $($profile_path + "atvantage.properties*") $($profile_path + "\backup") 
@@ -76,6 +94,7 @@ try {
     renameFiles $profile_path $old_env $args[1]
     switchEasEnv $profile_path $args[1] $old_env
     switchEasEnv $($profile_path + $bin) $args[1] $old_env
+    switchAtlantechEnv $args[1] $old_env
 } catch {
     rollback $profile_path
     rollback $($profile_path + $bin)

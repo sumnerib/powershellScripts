@@ -6,6 +6,17 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$env
 )
+function switchEasEnv($path, $new_env) {
+    $eas_content = Get-Content $($path + "ateas.properties")
+    $eas_content_new = ""
+    foreach ($line in $eas_content) {
+        if (($line -contains $new_env) -and !($line -contains "server")) {
+            $line = $line.Replace("#", "")
+        }
+        $eas_content_new += $line
+    }
+    $eas_content_new > $($path + "ateas.properties") 
+}
 
 function backupFiles($profile_path) {
     mkdir $($profile_path + "backup") | Out-Null
@@ -48,8 +59,9 @@ function rollback($profile_path) {
 }
 
 # Switches the properties files in order to change local Atvantage or Easweb environments
-$profile_path = "C:\Projects\IBM\SDP\runtimes\base_v7\profiles"
+$profile_path = "C:\Projects\IBM\WebSphere\AppServer\profiles\"
 $atvantage = "atvantage.properties"
+$easWeb = "ateas.properties"
 $bin = "bin\"
 
 switch ($branch) {
@@ -68,7 +80,7 @@ switch ($branch) {
         }
     }
     "release" {
-        $profile_name = "\AppSrv01AtvRelease\"
+        $profile_name = "\AppSrv01Release\"
         if ($env -eq "qa") {
             $old_env = "prod"
         } elseif ($env -eq "prod") {
@@ -77,6 +89,8 @@ switch ($branch) {
         } else {
             helpAndExit       
         }
+        $profile_name = "\AppSrv01Release\"
+        $old_env = if ($args[1] -eq "qa") {"prod"} else {"qa"}
     }
     default {
         helpAndExit
@@ -89,6 +103,8 @@ $ErrorActionPreference = "Stop"
 # Rename the files
 try {
     renameFiles $profile_path $old_env $env
+    switchEasEnv $profile_path $env
+    switchEasEnv $($profile_path + $bin) $env
 } catch {
     rollback $profile_path
     rollback $($profile_path + $bin)

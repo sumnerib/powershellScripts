@@ -3,6 +3,25 @@ function backupFiles($profile_path) {
     Copy-Item $($profile_path + "atvantage.properties*") $($profile_path + "\backup") 
 }
 
+function helpAndExit() {
+    Write-Host "ex: './change_server_env.ps1 [branchname] [env]'"
+    exit
+}
+
+function prodCheck() {
+    $end = $false
+    do {
+        $keepGoing = Read-Host -Prompt "Are you sure you want to switch to prod? (Y/N)"
+        if ($keepGoing -like "Y") {
+            $end = $true
+        } elseif ($keepGoing -like "N") {
+            exit
+        } else {
+            Write-Host "Please enter Y or N"    
+        }  
+    } until ($end)
+}
+
 function renameFiles($profile_path, $old_env, $new_env) {
     backupFiles $profile_path
     backupFiles $($profile_path + $bin)
@@ -31,28 +50,30 @@ switch ($args[0]) {
     }
     "main" { 
         $profile_name = "\AppSrv01AtvMain\"
-        $old_env = if ($args[1] -eq "dev") {"acpt"} else {"dev"}
+        if ($args[1] -eq "dev") {
+            $old_env = "acpt"
+        } elseif ($args[1] -eq "acpt") {
+            $old_env = "dev"
+        } else {
+            helpAndExit
+        }
     }
     "release" {
         $profile_name = "\AppSrv01AtvRelease\"
-        $old_env = if ($args[1] -eq "qa") {"prod"} else {"qa"}
+        if ($args[1] -eq "qa") {
+            $old_env = "prod"
+        } elseif ($args[1] -eq "prod") {
+            prodCheck
+            $old_env = "qa"
+        } else {
+            helpAndExit       
+        }
     }
     default {
-        Write-Host "ex: './change_server_env.ps1 [branchname] [env]'"
-        exit
+        helpAndExit
     }
 }
 $profile_path += $profile_name
-
-if ($args[1] -eq "dev") {
-    $old_env = "acpt"
-} elseif ($args[1] -eq "acpt") {
-    $old_env = "dev"
-} elseif ($args[1] -eq "qa") {
-    $old_env = "prod"
-} elseif ($args[1] -eq "prod") {
-    $old_env = "qa"
-}
 
 $ErrorActionPreference = "Stop"
 

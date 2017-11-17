@@ -3,7 +3,6 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$branch,
 
-    [Parameter(Mandatory=$true)]
     [string]$env
 )
 
@@ -47,6 +46,26 @@ function rollback($profile_path) {
     Remove-Item $($profile_path + "\backup") -recurse 
 }
 
+function showCurEnv($branch, $profile_path) {
+
+    $cur_env = ""
+    $propertiesFile = Get-Content $($profile_path + $atvantage)
+    if ($propertiesFile[0].Contains("DJ1")) {
+        $cur_env = "dev"
+    } elseif ($propertiesFile[0].Contains("AJ1")) {
+        $cur_env = "acpt"
+    } elseif ($propertiesFile[0].Contains("RJ1")) {
+        $cur_env = "qa"
+    } elseif ($propertiesFile[0].Contains("PJ1")) {
+        $cur_env = "prod"
+    } else {
+        Write-Host $("Couldn't identify current environment of " + $branch)
+        exit
+    }
+    Write-Host $("Current environment of " + $branch + ": " + $cur_env)
+    exit
+}
+
 # Switches the properties files in order to change local Atvantage or Easweb environments
 $profile_path = "C:\Projects\IBM\SDP\runtimes\base_v7\profiles"
 $atvantage = "atvantage.properties"
@@ -59,7 +78,11 @@ switch ($branch) {
     }
     "main" { 
         $profile_name = "\AppSrv01AtvMain\"
-        if ($env -eq "dev") {
+        $profile_path += $profile_name
+
+        if ($env -eq "") {
+            showCurEnv $branch $profile_path
+        } elseif ($env -eq "dev") {
             $old_env = "acpt"
         } elseif ($env -eq "acpt") {
             $old_env = "dev"
@@ -69,7 +92,11 @@ switch ($branch) {
     }
     "release" {
         $profile_name = "\AppSrv01AtvRelease\"
-        if ($env -eq "qa") {
+        $profile_path += $profile_name
+
+        if ($env -eq "") {
+            showCurEnv $branch $profile_path
+        } elseif ($env -eq "qa") {
             $old_env = "prod"
         } elseif ($env -eq "prod") {
             prodCheck
@@ -82,7 +109,6 @@ switch ($branch) {
         helpAndExit
     }
 }
-$profile_path += $profile_name
 
 $ErrorActionPreference = "Stop"
 

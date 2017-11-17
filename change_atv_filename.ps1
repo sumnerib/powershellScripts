@@ -22,23 +22,28 @@ function switchEasEnv($path, $new_env, $old_env) {
     $eas_content_new > $($path + "ateas.properties") 
 }
 
-function switchAtlantechEnv($new_env, $old_env) {
+function switchAtlantechEnv($new_env) {
     if ($new_env -eq "dev") {
         $new_env = "test"
     }
-    if ($old_env -eq "dev") {
-        $old_env = "test"
-    }
+    
     $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
-    $obi_index = $ini_file[1].IndexOf("obi")
-    $ini_file[1] = $ini_file[1].Insert($obi_index + 3, $new_env)
-    $new_length = $ini_file[1].IndexOf($new_env) + $new_env.Length
-    $ini_file[1] = $ini_file[1].Substring(0, $new_length)
+    $ini_file[1] = changeAtlantechEnvLine $ini_file[1] $new_env
+
     $ini_file_new = ""
     foreach ($line in $ini_file) {
         $ini_file_new += $($line + "`r`n")
     }
     $ini_file_new > "C:\Apps\EAS Acpt\Atlantech.ini"
+}
+
+function changeAtlantechEnvLine($atlantech_env_line, $new_env) {
+
+    $obi_index = $atlantech_env_line.IndexOf("obi")
+    $atlantech_env_line = $atlantech_env_line.Insert($obi_index + 3, $new_env)
+    $new_length = $atlantech_env_line.IndexOf($new_env) + $new_env.Length
+    $atlantech_env_line = $atlantech_env_line.Substring(0, $new_length)
+    return $atlantech_env_line
 }
 
 function backupFiles($profile_path) {
@@ -125,7 +130,7 @@ try {
     renameFiles $profile_path $old_env $env
     switchEasEnv $profile_path $env $old_env
     switchEasEnv $($profile_path + $bin) $env $old_env
-    switchAtlantechEnv $env $old_env
+    switchAtlantechEnv $env 
 } catch {
     rollback $profile_path
     rollback $($profile_path + $bin)

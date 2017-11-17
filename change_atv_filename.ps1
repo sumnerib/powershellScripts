@@ -1,10 +1,19 @@
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$true)]
+    [string]$branch,
+
+    [Parameter(Mandatory=$true)]
+    [string]$env
+)
+
 function backupFiles($profile_path) {
     mkdir $($profile_path + "backup") | Out-Null
     Copy-Item $($profile_path + "atvantage.properties*") $($profile_path + "\backup") 
 }
 
 function helpAndExit() {
-    Write-Host "ex: './change_server_env.ps1 [branchname] [env]'"
+    Write-Host "ex: './change_server_env.ps1 -branch [branchname] -env [env]'"
     exit
 }
 
@@ -43,16 +52,16 @@ $profile_path = "C:\Projects\IBM\SDP\runtimes\base_v7\profiles"
 $atvantage = "atvantage.properties"
 $bin = "bin\"
 
-switch ($args[0]) {
+switch ($branch) {
     "next" {  
         Write-Host "Not intended for use with next branch"
         exit
     }
     "main" { 
         $profile_name = "\AppSrv01AtvMain\"
-        if ($args[1] -eq "dev") {
+        if ($env -eq "dev") {
             $old_env = "acpt"
-        } elseif ($args[1] -eq "acpt") {
+        } elseif ($env -eq "acpt") {
             $old_env = "dev"
         } else {
             helpAndExit
@@ -60,9 +69,9 @@ switch ($args[0]) {
     }
     "release" {
         $profile_name = "\AppSrv01AtvRelease\"
-        if ($args[1] -eq "qa") {
+        if ($env -eq "qa") {
             $old_env = "prod"
-        } elseif ($args[1] -eq "prod") {
+        } elseif ($env -eq "prod") {
             prodCheck
             $old_env = "qa"
         } else {
@@ -79,7 +88,7 @@ $ErrorActionPreference = "Stop"
 
 # Rename the files
 try {
-    renameFiles $profile_path $old_env $args[1]
+    renameFiles $profile_path $old_env $env
 } catch {
     rollback $profile_path
     rollback $($profile_path + $bin)

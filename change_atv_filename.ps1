@@ -3,7 +3,9 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$branch,
 
-    [string]$env
+    [string]$env,
+
+    [switch]$restart
 )
 
 function switchEasEnv($path, $new_env, $old_env) {
@@ -80,6 +82,11 @@ function renameFiles($profile_path, $old_env, $new_env) {
     Remove-Item $($profile_path + $bin + "backup") -recurse 
 }
 
+function restartServer($profile_path) {
+    cmd.exe /c $($profile_path + $bin + "stopServer.bat server1")
+    cmd.exe /c $($profile_path + $bin + "startServer.bat server1")
+}
+
 function rollback($profile_path) {
     Copy-Item $($profile_path + "\backup\atvantage.properties*") $profile_path 
     Remove-Item $($profile_path + "\backup") -recurse 
@@ -151,12 +158,13 @@ switch ($branch) {
 
 $ErrorActionPreference = "Stop"
 
-# Rename the files
+# Rename the files (and optionally restart server)
 try {
     renameFiles $profile_path $old_env $env
     switchEasEnv $profile_path $env $old_env
     switchEasEnv $($profile_path + $bin) $env $old_env
     switchAtlantechEnv $env 
+    if ($restart) {restartServer $profile_path}
 } catch {
     rollback $profile_path
     rollback $($profile_path + $bin)

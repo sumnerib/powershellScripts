@@ -29,10 +29,11 @@ function switchAtlantechEnv($new_env, $old_env) {
     if ($old_env -eq "dev") {
         $old_env = "test"
     }
-
     $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
-    $ini_file[1] = $ini_file[1].Replace($old_env, $new_env)
-
+    $obi_index = $ini_file[1].IndexOf("obi")
+    $ini_file[1] = $ini_file[1].Insert($obi_index + 3, $new_env)
+    $new_length = $ini_file[1].IndexOf($new_env) + $new_env.Length
+    $ini_file[1] = $ini_file[1].Substring(0, $new_length)
     $ini_file_new = ""
     foreach ($line in $ini_file) {
         $ini_file_new += $($line + "`r`n")
@@ -110,8 +111,6 @@ switch ($branch) {
         } else {
             helpAndExit       
         }
-        $profile_name = "\AppSrv01Release\"
-        $old_env = if ($args[1] -eq "qa") {"prod"} else {"qa"}
     }
     default {
         helpAndExit
@@ -124,8 +123,8 @@ $ErrorActionPreference = "Stop"
 # Rename the files
 try {
     renameFiles $profile_path $old_env $env
-    switchEasEnv $profile_path $env
-    switchEasEnv $($profile_path + $bin) $env
+    switchEasEnv $profile_path $env $old_env
+    switchEasEnv $($profile_path + $bin) $env $old_env
     switchAtlantechEnv $env $old_env
 } catch {
     rollback $profile_path

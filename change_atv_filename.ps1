@@ -3,7 +3,9 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$branch,
 
-    [string]$env
+    [string]$env,
+
+    [switch]$restart
 )
 
 function backupFiles($profile_path) {
@@ -39,6 +41,11 @@ function renameFiles($profile_path, $old_env, $new_env) {
     Rename-Item -Path $($profile_path + $bin + $atvantage + "." + $new_env) -NewName $atvantage 
     Remove-Item $($profile_path + "backup") -recurse
     Remove-Item $($profile_path + $bin + "backup") -recurse 
+}
+
+function restartServer($profile_path) {
+    cmd.exe /c $($profile_path + $bin + "stopServer.bat server1")
+    cmd.exe /c $($profile_path + $bin + "startServer.bat server1")
 }
 
 function rollback($profile_path) {
@@ -112,9 +119,10 @@ switch ($branch) {
 
 $ErrorActionPreference = "Stop"
 
-# Rename the files
+# Rename the files (and optionally restart server)
 try {
     renameFiles $profile_path $old_env $env
+    if ($restart) {restartServer $profile_path}
 } catch {
     rollback $profile_path
     rollback $($profile_path + $bin)

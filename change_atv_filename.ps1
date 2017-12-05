@@ -32,14 +32,14 @@ function enablePrint($propertiesFile) {
     $new_file = "" 
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
         
-        if ($propertiesFile[$i].Contains("print service.")) {
+        if ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
            
+            $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
             $propertiesFile[$i + 1] = $propertiesFile[$i + 1].Replace("#", "")
             $propertiesFile[$i + 2] = $propertiesFile[$i + 2].Replace("#", "")
-            $propertiesFile[$i + 3] = $propertiesFile[$i + 3].Replace("#", "")
-        } elseif ($propertiesFile[$i].Contains("rating service.")) {
-            $propertiesFile[$i + 1] = commentLine $propertiesFile[$($i + 1)]
-            $propertiesFile[$i + 2] = commentLine $propertiesFile[$i + 2]
+        } elseif ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
+            $propertiesFile[$i] = commentLine $propertiesFile[$i]
+            $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
         }
         $new_file += $($propertiesFile[$i] + "`r`n")
     }
@@ -52,13 +52,13 @@ function enableRating($propertiesFile) {
     $new_file = ""
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
         
-        if ($propertiesFile[$i].Contains("rating service.")) {
+        if ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
+            $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
             $propertiesFile[$i + 1] = $propertiesFile[$i + 1].Replace("#", "")
-            $propertiesFile[$i + 2] = $propertiesFile[$i + 2].Replace("#", "")
-        } elseif ($propertiesFile[$i].Contains("print service.")) {
+        } elseif ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
+            $propertiesFile[$i] = commentLine $propertiesFile[$i]
             $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
             $propertiesFile[$i + 2] = commentLine $propertiesFile[$i + 2]
-            $propertiesFile[$i + 3] = commentLine $propertiesFile[$i + 3]
         }
         $new_file += $($propertiesFile[$i] + "`r`n")
     }

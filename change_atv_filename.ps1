@@ -16,18 +16,20 @@ function backupFiles($profile_path) {
 }
 
 function enableService($service, $path) {
+
+    $encoding = Get-FileEncoding $($path + "atvantage.properties")
     if ($service -eq "print") {
         $properties_file = Get-Content $($path + "atvantage.properties") 
-        enablePrint $properties_file 
+        enablePrint $properties_file $encoding 
     } elseif ($service -eq "rating") {
         $properties_file = Get-Content $($path + "atvantage.properties") 
-        enableRating $properties_file 
+        enableRating $properties_file $encoding
     } else {
         throw "Please specify 'rating' or 'print' for the service"
     }
 }
 
-function enablePrint($propertiesFile) {
+function enablePrint($propertiesFile, $encoding) {
     
     $new_file = "" 
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
@@ -44,10 +46,10 @@ function enablePrint($propertiesFile) {
         $new_file += $($propertiesFile[$i] + "`r`n")
     }
 
-    $new_file > $($path + "atvantage.properties")
+    $new_file | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
 }
 
-function enableRating($propertiesFile) {
+function enableRating($propertiesFile, $encoding) {
     
     $new_file = ""
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
@@ -63,7 +65,7 @@ function enableRating($propertiesFile) {
         $new_file += $($propertiesFile[$i] + "`r`n")
     }
         
-    $new_file > $($path + "atvantage.properties")
+    $new_file | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
 }
 
 function commentLine($line) {
@@ -72,6 +74,26 @@ function commentLine($line) {
     } else {
         return $line
     }    
+}
+
+function Get-FileEncoding {
+    param ( [string] $FilePath )
+
+    [byte[]] $byte = get-content -Encoding byte -ReadCount 4 -TotalCount 4 -Path $FilePath
+
+    if ( $byte[0] -eq 0xef -and $byte[1] -eq 0xbb -and $byte[2] -eq 0xbf )
+        { $encoding = 'UTF8' }  
+    elseif ($byte[0] -eq 0xfe -and $byte[1] -eq 0xff)
+        { $encoding = 'BigEndianUnicode' }
+    elseif ($byte[0] -eq 0xff -and $byte[1] -eq 0xfe)
+         { $encoding = 'Unicode' }
+    elseif ($byte[0] -eq 0 -and $byte[1] -eq 0 -and $byte[2] -eq 0xfe -and $byte[3] -eq 0xff)
+        { $encoding = 'UTF32' }
+    elseif ($byte[0] -eq 0x2b -and $byte[1] -eq 0x2f -and $byte[2] -eq 0x76)
+        { $encoding = 'UTF7'}
+    else
+        { $encoding = 'ASCII' }
+    return $encoding
 }
 
 function helpAndExit() {

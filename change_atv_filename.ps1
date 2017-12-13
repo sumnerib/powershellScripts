@@ -136,7 +136,7 @@ function Get-FileEncoding {
 }
 
 function helpAndExit() {
-    Write-Host "ex: './change_server_env.ps1 -branch [branchname] -env [env]'"
+    Write-Host "ex: './change_server_env.ps1 -branch [branchName] -env [env] -service [serviceName] -restart'"
     exit
 }
 

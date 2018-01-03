@@ -11,8 +11,11 @@ Param(
 )
 
 function switchEasEnv($path, $new_env, $old_env) {
+
     $eas_content = Get-Content $($path + "ateas.properties")
     $eas_content_new = ""
+    $encoding = Get-FileEncoding $($path + "ateas.properties")
+
     foreach ($line in $eas_content) {
 
         if (($line.Contains($new_env)) -and !($line.Contains("server"))) {
@@ -22,7 +25,7 @@ function switchEasEnv($path, $new_env, $old_env) {
         }
         $eas_content_new += $($line + "`r`n")
     }
-    $eas_content_new > $($path + "ateas.properties") 
+    $eas_content_new | Set-Content -Path $($path + "ateas.properties") -Encoding $encoding
 }
 
 function switchAtlantechEnv($new_env) {

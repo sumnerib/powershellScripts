@@ -59,55 +59,74 @@ function backupFiles($profile_path) {
 
 function enableService($service, $path) {
 
+    $properties_file = Get-Content $($path + "atvantage.properties") 
     $encoding = Get-FileEncoding $($path + "atvantage.properties")
+    $properties_file = $properties_file | ForEach-Object { $_ + "`r`n" }
+
     if ($service -eq "print") {
-        $properties_file = Get-Content $($path + "atvantage.properties") 
-        enablePrint $properties_file $encoding 
+        $properties_file = enablePrint $properties_file
+        $properties_file = disableRating $properties_file
     } elseif ($service -eq "rating") {
-        $properties_file = Get-Content $($path + "atvantage.properties") 
-        enableRating $properties_file $encoding
+        $properties_file = enableRating $properties_file 
+        $properties_file = disablePrint $properties_file
+    } elseif ($service -eq "both") {
+        $properties_file = enablePrint $properties_file
+        $properties_file = enableRating $properties_file
     } else {
-        throw "Please specify 'rating' or 'print' for the service"
+        throw "Please specify 'rating', 'print', or 'both' for the service"
     }
+
+    $outString = ""
+    $properties_file | ForEach-Object { $outString += $_ }
+    $outString | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
 }
 
-function enablePrint($propertiesFile, $encoding) {
-    
-    $new_file = "" 
+function disablePrint ($propertiesFile) {
+
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
         
         if ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
-           
-            $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
-            $propertiesFile[$i + 1] = $propertiesFile[$i + 1].Replace("#", "")
-            $propertiesFile[$i + 2] = $propertiesFile[$i + 2].Replace("#", "")
-        } elseif ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
-            $propertiesFile[$i] = commentLine $propertiesFile[$i]
-            $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
-        }
-        $new_file += $($propertiesFile[$i] + "`r`n")
-    }
-
-    $new_file | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
-}
-
-function enableRating($propertiesFile, $encoding) {
-    
-    $new_file = ""
-    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
-        
-        if ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
-            $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
-            $propertiesFile[$i + 1] = $propertiesFile[$i + 1].Replace("#", "")
-        } elseif ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
             $propertiesFile[$i] = commentLine $propertiesFile[$i]
             $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
             $propertiesFile[$i + 2] = commentLine $propertiesFile[$i + 2]
         }
-        $new_file += $($propertiesFile[$i] + "`r`n")
     }
+    return $propertiesFile
+}
+
+function disableRating ($propertiesFile) {
+
+    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
         
-    $new_file | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
+        if ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
+            $propertiesFile[$i] = commentLine $propertiesFile[$i]
+            $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
+        }
+    } 
+    return $propertiesFile
+}
+
+function enablePrint($propertiesFile) {
+    
+    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
+        if ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
+            $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
+            $propertiesFile[$i + 1] = $propertiesFile[$i + 1].Replace("#", "")
+            $propertiesFile[$i + 2] = $propertiesFile[$i + 2].Replace("#", "")
+        }
+    }
+    return $propertiesFile
+}
+
+function enableRating($propertiesFile) {
+    
+    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
+        if ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
+            $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
+            $propertiesFile[$i + 1] = $propertiesFile[$i + 1].Replace("#", "")
+        }
+    }
+    return $propertiesFile
 }
 
 function commentLine($line) {

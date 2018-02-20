@@ -11,7 +11,9 @@ Param(
     [string]$jre,
 
     [Parameter(Mandatory=$true, ParameterSetName='DoRepair')]
-    [switch]$repair
+    [switch]$repair,
+
+    [switch]$terse
 )
 
 # Courtesy of: https://www.jonathanmedd.net/2014/02/testing-for-the-presence-of-a-registry-key-and-value.html
@@ -41,7 +43,7 @@ function Check-Command($cmdname) {
     return [bool](Get-Command -Name $cmdname -ErrorAction SilentlyContinue)
 }
 
-function Delete-MSOIfExists {
+function Remove-MSOIfExists {
     $mso_exists = Test-RegistryValue -Path $mso_path -Value "mso.dll"
     if ($mso_exists) {
         Remove-ItemProperty -Path $mso_path -Name "mso.dll"
@@ -50,14 +52,16 @@ function Delete-MSOIfExists {
 }
 
 function Repair-AfterPatch {
-    
+   
+    if ($terse) { $ProgressPreference = 'SilentlyContinue' }
     if (Check-Command -cmdname 'Repair-MSIProduct') {
-        Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct -Verbose
+        Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct 
     } else {
         Install-Module -Name 'MSI'
-        Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct -Verbose
+        Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct 
     }
-    Delete-MSOIfExists
+    if ($terse) { $ProgressPreference = 'Continue' }
+    Remove-MSOIfExists
 }
 
 if ($PSBoundParameters.ContainsKey('repair')) { 
@@ -84,5 +88,5 @@ if ($mso_exists) { exit }
 
 # 5.  Look at HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/Office/14.0/Common/Files/Paths again and 
 # remove mso.dll key if it was added by the install.
-Delete-MSOIfExists
+Remove-MSOIfExists
 Write-Host "JDBC-ODBC driver enabled!"

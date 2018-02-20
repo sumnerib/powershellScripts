@@ -6,8 +6,12 @@
 
 [CmdletBinding()]
 Param(
-    [Parameter(Mandatory=$true)]
-    [string]$jre
+    [Parameter(Mandatory=$true, ParameterSetName='JavaRuntimePath')]
+    [ValidateScript({Test-Path $_})]
+    [string]$jre,
+
+    [Parameter(Mandatory=$true, ParameterSetName='DoRepair')]
+    [switch]$repair
 )
 
 # Courtesy of: https://www.jonathanmedd.net/2014/02/testing-for-the-presence-of-a-registry-key-and-value.html
@@ -29,8 +33,40 @@ function Test-RegistryValue {
     }
 }
 
+$access_db_engine_msi = 'Microsoft Access database engine 2010 (English)'
 $src_path =  "\\mrkvmapp076\E\PrintAccessDB\"
 $mso_path = "HKLM:\SOFTWARE\Microsoft\Office\14.0\Common\FilesPaths\"
+
+function Check-Command($cmdname) {
+    return [bool](Get-Command -Name $cmdname -ErrorAction SilentlyContinue)
+}
+
+function Delete-MSOIfExists {
+    $mso_exists = Test-RegistryValue -Path $mso_path -Value "mso.dll"
+    if ($mso_exists) {
+        Remove-ItemProperty -Path $mso_path -Name "mso.dll"
+        Write-Host "mso.dll Removed"
+    }
+}
+
+function Repair-AfterPatch {
+    
+    if (Check-Command -cmdname 'Repair-MSIProduct') {
+        Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct -Verbose
+    } else {
+        Install-Module -Name 'MSI'
+        Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct -Verbose
+    }
+    Delete-MSOIfExists
+}
+
+if ($PSBoundParameters.ContainsKey('repair')) { 
+    Repair-AfterPatch 
+    Write-Host "JDBC-ODBC driver enabled!"
+    exit
+}
+
+if ($jre -notmatch '.+?\\$') { $jre += '\'}
 
 # 1.  Copy jdbc.jar into 'lib/ext' folder of the JRE.
 Copy-Item $($src_path + "jdbc.jar") $($jre + "lib\ext")
@@ -48,9 +84,5 @@ if ($mso_exists) { exit }
 
 # 5.  Look at HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/Office/14.0/Common/Files/Paths again and 
 # remove mso.dll key if it was added by the install.
-$mso_exists = Test-RegistryValue -Path $mso_path -Value "mso.dll"
-if ($mso_exists) {
-    Remove-ItemProperty -Path $mso_path -Name "mso.dll"
-    Write-Host "mso.dll Removed"
-}
+Delete-MSOIfExists
 Write-Host "JDBC-ODBC driver enabled!"

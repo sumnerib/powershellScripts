@@ -239,6 +239,20 @@ switch ($branch) {
             helpAndExit
         }
     }
+    "acp" { 
+        $profile_name = "\ACPConversionAppSrv01\"
+        $profile_path += $profile_name
+
+        if ($env -eq "dev") {
+            $old_env = "acpt"
+        } elseif ($env -eq "acpt") {
+            $old_env = "dev"
+        } elseif ($env -eq "") {
+            if ($service -eq "") {showCurEnv $branch $profile_path}
+        } else {
+            helpAndExit
+        }
+    }
     "release" {
         $profile_name = "\AppSrv01Release\"
         $profile_path += $profile_name

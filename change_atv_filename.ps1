@@ -72,6 +72,9 @@ function enableService($service, $path) {
     } elseif ($service -eq "both") {
         $properties_file = enablePrint $properties_file
         $properties_file = enableRating $properties_file
+    } elseif ($service -eq "neither") {
+        $properties_file = disablePrint $properties_file
+        $properties_file = disableRating $properties_file
     } else {
         throw "Please specify 'rating', 'print', or 'both' for the service"
     }

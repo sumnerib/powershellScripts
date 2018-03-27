@@ -225,8 +225,12 @@ $bin = "bin\"
 
 switch ($branch) {
     "next" {  
-        Write-Host "Not intended for use with next branch"
-        exit
+        $profile_name = "\AppSrv01Next\"
+        $profile_path += $profile_name
+        if ($env -ne "") {
+            $env = ""
+            Write-Host "Ignoring -env when -branch is 'next'"
+        }
     }
     "main" { 
         $profile_name = "\AppSrv01AtvMain\"

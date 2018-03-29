@@ -72,6 +72,9 @@ function enableService($service, $path) {
     } elseif ($service -eq "both") {
         $properties_file = enablePrint $properties_file
         $properties_file = enableRating $properties_file
+    } elseif ($service -eq "neither") {
+        $properties_file = disablePrint $properties_file
+        $properties_file = disableRating $properties_file
     } else {
         throw "Please specify 'rating', 'print', or 'both' for the service"
     }
@@ -222,8 +225,12 @@ $bin = "bin\"
 
 switch ($branch) {
     "next" {  
-        Write-Host "Not intended for use with next branch"
-        exit
+        $profile_name = "\AppSrv01Next\"
+        $profile_path += $profile_name
+        if ($env -ne "") {
+            $env = ""
+            Write-Host "Ignoring -env when -branch is 'next'"
+        }
     }
     "main" { 
         $profile_name = "\AppSrv01AtvMain\"

@@ -140,6 +140,22 @@ function commentLine($line) {
     }    
 }
 
+function getCurrentEnvironment() {
+
+    $propertiesFile = Get-Content $($profile_path + $atvantage)
+    if ($propertiesFile[0].Contains("DJ1")) {
+        return "dev"
+    } elseif ($propertiesFile[0].Contains("AJ1")) {
+        return "acpt"
+    } elseif ($propertiesFile[0].Contains("RJ1")) {
+        return "qa"
+    } elseif ($propertiesFile[0].Contains("PJ1")) {
+        return "prod"
+    } else {
+        return $false;
+    }
+}
+
 function Get-FileEncoding {
     param ( [string] $FilePath )
 
@@ -197,23 +213,12 @@ function rollback($profile_path) {
     Remove-Item $($profile_path + "\backup") -recurse 
 }
 
-function showCurEnv($branch, $profile_path) {
-
-    $cur_env = ""
-    $propertiesFile = Get-Content $($profile_path + $atvantage)
-    if ($propertiesFile[0].Contains("DJ1")) {
-        $cur_env = "dev"
-    } elseif ($propertiesFile[0].Contains("AJ1")) {
-        $cur_env = "acpt"
-    } elseif ($propertiesFile[0].Contains("RJ1")) {
-        $cur_env = "qa"
-    } elseif ($propertiesFile[0].Contains("PJ1")) {
-        $cur_env = "prod"
-    } else {
+function showCurEnv($branch, $cur_env) {
+    if (!$cur_env) {
         Write-Host $("Couldn't identify current environment of " + $branch)
-        exit
+    } else {
+        Write-Host $("Current environment of " + $branch + ": " + $cur_env)
     }
-    Write-Host $("Current environment of " + $branch + ": " + $cur_env)
     exit
 }
 
@@ -235,13 +240,17 @@ switch ($branch) {
     "main" { 
         $profile_name = "\AppSrv01AtvMain\"
         $profile_path += $profile_name
+        $cur_env = getCurrentEnvironment
 
-        if ($env -eq "dev") {
+        if ($env -eq $cur_env) {
+            Write-Host $("Already in " + $cur_env)
+            $env = ""
+        } elseif ($env -eq "dev") {
             $old_env = "acpt"
         } elseif ($env -eq "acpt") {
             $old_env = "dev"
         } elseif ($env -eq "") {
-            if ($service -eq "") {showCurEnv $branch $profile_path}
+            if ($service -eq "") { showCurEnv $branch $cur_env }
         } else {
             helpAndExit
         }
@@ -263,14 +272,18 @@ switch ($branch) {
     "release" {
         $profile_name = "\AppSrv01Release\"
         $profile_path += $profile_name
+        $cur_env = getCurrentEnvironment
 
-        if ($env -eq "qa") {
+        if ($env -eq $cur_env) {
+            Write-Host $("Already in " + $cur_env)
+            $env = ""
+        } elseif ($env -eq "qa") {
             $old_env = "prod"
         } elseif ($env -eq "prod") {
             prodCheck
             $old_env = "qa"
         } elseif ($env -eq "") {
-            if ($service -eq "") {showCurEnv $branch $profile_path}
+            if ($service -eq "") { showCurEnv $branch $cur_env }
         } else {
             helpAndExit
         }

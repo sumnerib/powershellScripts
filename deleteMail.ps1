@@ -1,7 +1,18 @@
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$true)]
+    [string]$userEmail
+)
+
+if ($userEmail -notmatch '^[_a-z0-9-]+(.[a-z0-9-]+)@[a-z0-9-]+(.[a-z0-9-]+)*\.([a-z]{2,4})$') {
+    Write-Error "Bad User Email"
+    exit
+}
+
 $outlook = New-Object -ComObject Outlook.Application
 $namespace = $outlook.GetNamespace("MAPI")            
             
-$account = $namespace.Folders | Where-Object { $_.Name -eq 'isumner@onebeacon.com' }
+$account = $namespace.Folders | Where-Object { $_.Name -eq $userEmail }
 $inbox = $account.Folders | Where-Object { $_.Name -match "Inbox" }
 
 for ($i=$($inbox.Items.count);$i -ge 1; $i--) { # 1-based collection

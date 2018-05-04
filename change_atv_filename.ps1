@@ -7,7 +7,9 @@ Param(
 
     [string]$service,
 
-    [switch]$restart
+    [switch]$restart, 
+
+    [switch]$easWeb
 )
 
 function switchEasEnv($path, $new_env, $old_env) {
@@ -28,7 +30,7 @@ function switchEasEnv($path, $new_env, $old_env) {
     $eas_content_new | Set-Content -Path $($path + "ateas.properties") -Encoding $encoding
 }
 
-function switchAtlantechEnv($new_env) {
+function switchAtlantechEnv($new_env, $easWeb) {
     if ($new_env -eq "dev") {
         $new_env = "test"
     }
@@ -36,6 +38,16 @@ function switchAtlantechEnv($new_env) {
     $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
     $ini_file[1] = changeAtlantechEnvLine $ini_file[1] $new_env
 
+    $ini_file_new = ""
+    foreach ($line in $ini_file) {
+        $ini_file_new += $($line + "`r`n")
+    }
+    $ini_file_new > "C:\Apps\EAS Acpt\Atlantech.ini"
+}
+
+function useLocalEasWeb() {
+    $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
+    $ini_file[3] = $ini_file[3].Replace("#", "")
     $ini_file_new = ""
     foreach ($line in $ini_file) {
         $ini_file_new += $($line + "`r`n")
@@ -250,7 +262,7 @@ switch ($branch) {
         } elseif ($env -eq "acpt") {
             $old_env = "dev"
         } elseif ($env -eq "") {
-            if ($service -eq "") { showCurEnv $branch $cur_env }
+            if ($service -eq "" -and -not $easWeb) { showCurEnv $branch $cur_env }
         } else {
             helpAndExit
         }
@@ -269,7 +281,7 @@ switch ($branch) {
             prodCheck
             $old_env = "qa"
         } elseif ($env -eq "") {
-            if ($service -eq "") { showCurEnv $branch $cur_env }
+            if ($service -eq "" -and -not $easWeb) { showCurEnv $branch $cur_env }
         } else {
             helpAndExit
         }
@@ -291,6 +303,7 @@ try {
         switchEasEnv $($profile_path + $bin) $env $old_env
         switchAtlantechEnv $env
     }
+    if ($easWeb) { useLocalEasWeb }
     if ($service -ne "") {
         enableService $service $profile_path
         enableService $service $($profile_path + $bin)

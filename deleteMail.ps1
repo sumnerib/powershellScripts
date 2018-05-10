@@ -31,13 +31,16 @@ $namespace = $outlook.GetNamespace("MAPI")
 $account = $namespace.Folders | Where-Object { $_.Name -eq $userEmail }
 $inbox = $account.Folders | Where-Object { $_.Name -match "Inbox" }
 
-for ($i=$($inbox.Items.count);$i -ge 1; $i--) { # 1-based collection
+for ($i=$($inbox.Items.count); $i -ge 1; $i--) { # 1-based collection
     $email =  $inbox.Items[$i]
     $blacklist = Get-Content ".\delete_list.txt"
 
     try {
         if ($blacklist.Contains($email.Sender.Address)) { $email.delete() }
-        elseif ($email.Subject.Contains("[E!] - ")) { 
+        elseif ($email.Subject.Contains("[E!] - ") -or
+                $email.Subject.Contains("Incident ISSUE=") -or
+                $email.Subject.Contains("Subtask Opened to Team, Update with Assignee")) {
+
             $email.Unread = $false
             $email.delete() 
         }

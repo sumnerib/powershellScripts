@@ -267,6 +267,24 @@ switch ($branch) {
             helpAndExit
         }
     }
+    "acp" { 
+        $profile_name = "\ACPConversionAppSrv01\"
+        $profile_path += $profile_name
+        $cur_env = getCurrentEnvironment
+
+        if ($env -eq $cur_env) {
+            Write-Host $("Already in " + $cur_env)
+            $env = ""
+        } elseif ($env -eq "dev") {
+            $old_env = "acpt"
+        } elseif ($env -eq "acpt") {
+            $old_env = "dev"
+        } elseif ($env -eq "") {
+            if ($service -eq "") {showCurEnv $branch $cur_env}
+        } else {
+            helpAndExit
+        }
+    }
     "release" {
         $profile_name = "\AppSrv01Release\"
         $profile_path += $profile_name

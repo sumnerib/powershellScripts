@@ -16,8 +16,8 @@ while ([bool](Get-Process OUTLOOK* -EA SilentlyContinue)) {
 $Logfile = ".\delete_mail.log"
 Function LogWrite
 {
-   Param ([string]$logstring)
-   Add-content $Logfile -value $logstring
+    Param ([string]$logstring)
+    Add-content $Logfile -value $logstring
 }
 
 if ($userEmail -notmatch '^[_a-z0-9-]+(.[a-z0-9-]+)@[a-z0-9-]+(.[a-z0-9-]+)*\.([a-z]{2,4})$') {

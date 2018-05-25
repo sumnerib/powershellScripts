@@ -30,17 +30,23 @@ $namespace = $outlook.GetNamespace("MAPI")
             
 $account = $namespace.Folders | Where-Object { $_.Name -eq $userEmail }
 $inbox = $account.Folders | Where-Object { $_.Name -match "Inbox" }
+$subjectList = ""
+$deleteCount = 0
 
 for ($i=$($inbox.Items.count); $i -ge 1; $i--) { # 1-based collection
     $email =  $inbox.Items[$i]
     $blacklist = Get-Content ".\delete_list.txt"
 
+    $subjectList += $($email.Subject + "`r`n")
     try {
-        if ($blacklist.Contains($email.Sender.Address)) { $email.delete() }
-        elseif ($email.Subject.Contains("[E!] - ") -or
+        if ($blacklist.Contains($email.Sender.Address)) { 
+            $email.delete()
+            $deleteCount += 1
+        } elseif ($email.Subject.Contains("[E!] - ") -or
                 $email.Subject.Contains("Incident ISSUE=") -or
                 $email.Subject.Contains("Subtask Opened to Team, Update with Assignee")) {
-
+            
+            $deleteCount += 1
             $email.Unread = $false
             $email.delete() 
         }
@@ -50,6 +56,8 @@ for ($i=$($inbox.Items.count); $i -ge 1; $i--) { # 1-based collection
         LogWrite $("[" + (Get-Date).ToString() + "] " + $email.Subject) 
     }
 }
+LogWrite $subjectList
+LogWrite $("[" + (Get-Date).ToString() + "] Number of Items Deleted: " + $deleteCount) 
 
 if  ([bool](Get-Process OUTLOOK* -EA SilentlyContinue)) {
     Get-Process OUTLOOK* | Stop-Process -Force  

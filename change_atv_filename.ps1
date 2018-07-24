@@ -10,7 +10,7 @@ Param(
     [switch]$restart
 )
 
-function switchEasEnv($path, $new_env, $old_env) {
+function switchEasEnv($path, $new_env, $cur_env) {
 
     $eas_content = Get-Content $($path + "ateas.properties")
     $eas_content_new = ""
@@ -20,7 +20,7 @@ function switchEasEnv($path, $new_env, $old_env) {
 
         if (($line.Contains($new_env)) -and !($line.Contains("server"))) {
             $line = $line.Replace("#", "")
-        } elseif (($line.Contains($old_env)) -and !($line.Contains("server"))) {
+        } elseif (($line.Contains($cur_env)) -and !($line.Contains("server"))) {
             $line = $line.Insert(0, "#")
         }
         $eas_content_new += $($line + "`r`n")
@@ -195,10 +195,10 @@ function prodCheck() {
     } until ($end)
 }
 
-function renameFiles($profile_path, $old_env, $new_env) {
+function renameFiles($profile_path, $cur_env, $new_env) {
 
-    Rename-Item -Path $($profile_path + $atvantage) -NewName $($atvantage + "." + $old_env) 
-    Rename-Item -Path $($profile_path + $bin + $atvantage) -NewName $($atvantage + "." + $old_env) 
+    Rename-Item -Path $($profile_path + $atvantage) -NewName $($atvantage + "." + $cur_env) 
+    Rename-Item -Path $($profile_path + $bin + $atvantage) -NewName $($atvantage + "." + $cur_env) 
     Rename-Item -Path $($profile_path + $atvantage + "." + $new_env) -NewName $atvantage 
     Rename-Item -Path $($profile_path + $bin + $atvantage + "." + $new_env) -NewName $atvantage 
 }
@@ -227,74 +227,30 @@ function showCurEnv($branch, $cur_env) {
 $profile_path = "C:\Projects\IBM\WebSphere\AppServer\profiles\"
 $atvantage = "atvantage.properties"
 $bin = "bin\"
+$profile_name = ""
 
 switch ($branch) {
     "next" {
         $profile_name = "\AppSrv01Next\"
-        $profile_path += $profile_name
         if ($env -ne "") {
             $env = ""
             Write-Host "Ignoring -env when -branch is 'next'"
         }
-    }
-    "main" {
-        $profile_name = "\AppSrv01AtvMain\"
-        $profile_path += $profile_name
-        $cur_env = getCurrentEnvironment
+    } "main" { $profile_name = "\AppSrv01AtvMain\" }
+    "acp" { $profile_name = "\ACPConversionAppSrv01\" }
+    "release" { $profile_name = "\AppSrv01Release\" }
+    default { helpAndExit }
+}
 
-        if ($env -eq $cur_env) {
-            Write-Host $("Already in " + $cur_env)
-            $env = ""
-        } elseif ($env -eq "dev") {
-            $old_env = "acpt"
-        } elseif ($env -eq "acpt") {
-            $old_env = "dev"
-        } elseif ($env -eq "") {
-            if ($service -eq "") { showCurEnv $branch $cur_env }
-        } else {
-            helpAndExit
-        }
-    }
-    "acp" {
-        $profile_name = "\ACPConversionAppSrv01\"
-        $profile_path += $profile_name
-        $cur_env = getCurrentEnvironment
-
-        if ($env -eq $cur_env) {
-            Write-Host $("Already in " + $cur_env)
-            $env = ""
-        } elseif ($env -eq "dev") {
-            $old_env = "acpt"
-        } elseif ($env -eq "acpt") {
-            $old_env = "dev"
-        } elseif ($env -eq "") {
-            if ($service -eq "") {showCurEnv $branch $cur_env}
-        } else {
-            helpAndExit
-        }
-    }
-    "release" {
-        $profile_name = "\AppSrv01Release\"
-        $profile_path += $profile_name
-        $cur_env = getCurrentEnvironment
-
-        if ($env -eq $cur_env) {
-            Write-Host $("Already in " + $cur_env)
-            $env = ""
-        } elseif ($env -eq "qa") {
-            $old_env = "prod"
-        } elseif ($env -eq "prod") {
-            prodCheck
-            $old_env = "qa"
-        } elseif ($env -eq "") {
-            if ($service -eq "") { showCurEnv $branch $cur_env }
-        } else {
-            helpAndExit
-        }
-    }
-    default {
-        helpAndExit
-    }
+$profile_path += $profile_name
+$cur_env = getCurrentEnvironment
+if ($env -eq $cur_env) {
+    Write-Host $("Already in " + $cur_env)
+    $env = ""
+} elseif ($env -eq "prod") {
+    prodCheck
+} elseif ($env -eq "") {
+    if ($service -eq "") { showCurEnv $branch $cur_env }
 }
 
 $ErrorActionPreference = "Stop"
@@ -304,9 +260,9 @@ try {
     backupFiles $profile_path
     backupFiles $($profile_path + $bin)
     if ($env -ne "") {
-        renameFiles $profile_path $old_env $env
-        switchEasEnv $profile_path $env $old_env
-        switchEasEnv $($profile_path + $bin) $env $old_env
+        renameFiles $profile_path $cur_env $env
+        switchEasEnv $profile_path $env $cur_env
+        switchEasEnv $($profile_path + $bin) $env $cur_env
         switchAtlantechEnv $env
     }
     if ($service -ne "") {

@@ -7,7 +7,9 @@ Param(
 
     [string]$service,
 
-    [switch]$restart
+    [switch]$restart,
+
+    [switch]$pm
 )
 
 function switchEasEnv($path, $new_env, $cur_env) {
@@ -132,6 +134,23 @@ function enableRating($propertiesFile) {
     return $propertiesFile
 }
 
+function toggleProdProducerMgmt($propertiesFile) {
+
+    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
+
+        if ($propertiesFile[$i].Contains("ENDPT_PM_SERVICES")) {
+
+            if ($propertiesFile.IndexOf("#") -eq 0) {
+                $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
+            } else {
+                commentLine $propertiesFile[$i]
+            }
+
+            break
+        }
+    }
+}
+
 function commentLine($line) {
     if (!$line.Contains("#")) {
         return $line.Insert(0, "#")
@@ -236,7 +255,8 @@ switch ($branch) {
             $env = ""
             Write-Host "Ignoring -env when -branch is 'next'"
         }
-    } "main" { $profile_name = "\AppSrv01AtvMain\" }
+    } 
+    "main" { $profile_name = "\AppSrv01AtvMain\" }
     "acp" { $profile_name = "\ACPConversionAppSrv01\" }
     "release" { $profile_name = "\AppSrv01Release\" }
     default { helpAndExit }
@@ -268,6 +288,10 @@ try {
     if ($service -ne "") {
         enableService $service $profile_path
         enableService $service $($profile_path + $bin)
+    }
+    if ($pm) { 
+        toggleProdProducerMgmt $profile_path 
+        toggleProdProducerMgmt $($profile_path + $bin)
     }
     if ($restart) {restartServer $profile_path}
     Remove-Item $($profile_path + "backup") -recurse

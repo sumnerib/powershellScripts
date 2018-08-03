@@ -134,21 +134,29 @@ function enableRating($propertiesFile) {
     return $propertiesFile
 }
 
-function toggleProdProducerMgmt($propertiesFile) {
+function toggleProdProducerMgmt($path) {
+
+    $propertiesfile = Get-Content $($path + "atvantage.properties")
+    $encoding = Get-FileEncoding $($path + "atvantage.properties")
+    $propertiesfile = $propertiesfile | ForEach-Object { $_ + "`r`n" }
 
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
 
         if ($propertiesFile[$i].Contains("ENDPT_PM_SERVICES")) {
 
-            if ($propertiesFile.IndexOf("#") -eq 0) {
+            if ($propertiesFile[$i].IndexOf("#") -eq 0) {
                 $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
             } else {
-                commentLine $propertiesFile[$i]
+                $propertiesfile[$i] = commentLine $propertiesFile[$i]
             }
 
             break
         }
     }
+
+    $outString = ""
+    $propertiesfile | ForEach-Object { $outString += $_ }
+    $outString | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
 }
 
 function commentLine($line) {

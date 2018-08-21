@@ -9,10 +9,12 @@ Param(
 
     [switch]$restart, 
 
-    [switch]$easWeb
+    [switch]$easWeb,
+
+    [switch]$pm
 )
 
-function switchEasEnv($path, $new_env, $old_env) {
+function switchEasEnv($path, $new_env, $cur_env) {
 
     $eas_content = Get-Content $($path + "ateas.properties")
     $eas_content_new = ""
@@ -22,7 +24,7 @@ function switchEasEnv($path, $new_env, $old_env) {
 
         if (($line.Contains($new_env)) -and !($line.Contains("server"))) {
             $line = $line.Replace("#", "")
-        } elseif (($line.Contains($old_env)) -and !($line.Contains("server"))) {
+        } elseif (($line.Contains($cur_env)) -and !($line.Contains("server"))) {
             $line = $line.Insert(0, "#")
         }
         $eas_content_new += $($line + "`r`n")
@@ -34,7 +36,7 @@ function switchAtlantechEnv($new_env, $easWeb) {
     if ($new_env -eq "dev") {
         $new_env = "test"
     }
-    
+
     $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
     $ini_file[1] = changeAtlantechEnvLine $ini_file[1] $new_env
 
@@ -66,12 +68,12 @@ function changeAtlantechEnvLine($atlantech_env_line, $new_env) {
 
 function backupFiles($profile_path) {
     mkdir $($profile_path + "backup") | Out-Null
-    Copy-Item $($profile_path + "atvantage.properties*") $($profile_path + "\backup") 
+    Copy-Item $($profile_path + "atvantage.properties*") $($profile_path + "\backup")
 }
 
 function enableService($service, $path) {
 
-    $properties_file = Get-Content $($path + "atvantage.properties") 
+    $properties_file = Get-Content $($path + "atvantage.properties")
     $encoding = Get-FileEncoding $($path + "atvantage.properties")
     $properties_file = $properties_file | ForEach-Object { $_ + "`r`n" }
 
@@ -79,7 +81,7 @@ function enableService($service, $path) {
         $properties_file = enablePrint $properties_file
         $properties_file = disableRating $properties_file
     } elseif ($service -eq "rating") {
-        $properties_file = enableRating $properties_file 
+        $properties_file = enableRating $properties_file
         $properties_file = disablePrint $properties_file
     } elseif ($service -eq "both") {
         $properties_file = enablePrint $properties_file
@@ -99,7 +101,7 @@ function enableService($service, $path) {
 function disablePrint ($propertiesFile) {
 
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
-        
+
         if ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
             $propertiesFile[$i] = commentLine $propertiesFile[$i]
             $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
@@ -112,17 +114,17 @@ function disablePrint ($propertiesFile) {
 function disableRating ($propertiesFile) {
 
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
-        
+
         if ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
             $propertiesFile[$i] = commentLine $propertiesFile[$i]
             $propertiesFile[$i + 1] = commentLine $propertiesFile[$i + 1]
         }
-    } 
+    }
     return $propertiesFile
 }
 
 function enablePrint($propertiesFile) {
-    
+
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
         if ($propertiesFile[$i].Contains("PRINT_SVC_WS")) {
             $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
@@ -134,7 +136,7 @@ function enablePrint($propertiesFile) {
 }
 
 function enableRating($propertiesFile) {
-    
+
     for ($i = 0; $i -lt $propertiesFile.length; $i++) {
         if ($propertiesFile[$i].Contains("RATING_SVC_WS")) {
             $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
@@ -144,12 +146,37 @@ function enableRating($propertiesFile) {
     return $propertiesFile
 }
 
+function toggleProdProducerMgmt($path) {
+
+    $propertiesfile = Get-Content $($path + "atvantage.properties")
+    $encoding = Get-FileEncoding $($path + "atvantage.properties")
+    $propertiesfile = $propertiesfile | ForEach-Object { $_ + "`r`n" }
+
+    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
+
+        if ($propertiesFile[$i].Contains("ENDPT_PM_SERVICES")) {
+
+            if ($propertiesFile[$i].IndexOf("#") -eq 0) {
+                $propertiesFile[$i] = $propertiesFile[$i].Replace("#", "")
+            } else {
+                $propertiesfile[$i] = commentLine $propertiesFile[$i]
+            }
+
+            break
+        }
+    }
+
+    $outString = ""
+    $propertiesfile | ForEach-Object { $outString += $_ }
+    $outString | Set-Content -Path $($path + "atvantage.properties") -Encoding $encoding
+}
+
 function commentLine($line) {
     if (!$line.Contains("#")) {
         return $line.Insert(0, "#")
     } else {
         return $line
-    }    
+    }
 }
 
 function getCurrentEnvironment() {
@@ -174,11 +201,11 @@ function Get-FileEncoding {
     [byte[]] $byte = get-content -Encoding byte -ReadCount 4 -TotalCount 4 -Path $FilePath
 
     if ( $byte[0] -eq 0xef -and $byte[1] -eq 0xbb -and $byte[2] -eq 0xbf )
-        { $encoding = 'UTF8' }  
+        { $encoding = 'UTF8' }
     elseif ($byte[0] -eq 0xfe -and $byte[1] -eq 0xff)
         { $encoding = 'BigEndianUnicode' }
     elseif ($byte[0] -eq 0xff -and $byte[1] -eq 0xfe)
-         { $encoding = 'Unicode' }
+        { $encoding = 'Unicode' }
     elseif ($byte[0] -eq 0 -and $byte[1] -eq 0 -and $byte[2] -eq 0xfe -and $byte[3] -eq 0xff)
         { $encoding = 'UTF32' }
     elseif ($byte[0] -eq 0x2b -and $byte[1] -eq 0x2f -and $byte[2] -eq 0x76)
@@ -202,15 +229,15 @@ function prodCheck() {
         } elseif ($keepGoing -like "N") {
             exit
         } else {
-            Write-Host "Please enter Y or N"    
-        }  
+            Write-Host "Please enter Y or N"
+        }
     } until ($end)
 }
 
-function renameFiles($profile_path, $old_env, $new_env) {
-   
-    Rename-Item -Path $($profile_path + $atvantage) -NewName $($atvantage + "." + $old_env) 
-    Rename-Item -Path $($profile_path + $bin + $atvantage) -NewName $($atvantage + "." + $old_env) 
+function renameFiles($profile_path, $cur_env, $new_env) {
+
+    Rename-Item -Path $($profile_path + $atvantage) -NewName $($atvantage + "." + $cur_env) 
+    Rename-Item -Path $($profile_path + $bin + $atvantage) -NewName $($atvantage + "." + $cur_env) 
     Rename-Item -Path $($profile_path + $atvantage + "." + $new_env) -NewName $atvantage 
     Rename-Item -Path $($profile_path + $bin + $atvantage + "." + $new_env) -NewName $atvantage 
 }
@@ -239,74 +266,31 @@ function showCurEnv($branch, $cur_env) {
 $profile_path = "C:\Projects\IBM\WebSphere\AppServer\profiles\"
 $atvantage = "atvantage.properties"
 $bin = "bin\"
+$profile_name = ""
 
 switch ($branch) {
-    "next" {  
+    "next" {
         $profile_name = "\AppSrv01Next\"
-        $profile_path += $profile_name
         if ($env -ne "") {
             $env = ""
             Write-Host "Ignoring -env when -branch is 'next'"
         }
-    }
-    "main" { 
-        $profile_name = "\AppSrv01AtvMain\"
-        $profile_path += $profile_name
-        $cur_env = getCurrentEnvironment
+    } 
+    "main" { $profile_name = "\AppSrv01AtvMain\" }
+    "acp" { $profile_name = "\ACPConversionAppSrv01\" }
+    "release" { $profile_name = "\AppSrv01Release\" }
+    default { helpAndExit }
+}
 
-        if ($env -eq $cur_env) {
-            Write-Host $("Already in " + $cur_env)
-            $env = ""
-        } elseif ($env -eq "dev") {
-            $old_env = "acpt"
-        } elseif ($env -eq "acpt") {
-            $old_env = "dev"
-        } elseif ($env -eq "") {
-            if ($service -eq "" -and -not $easWeb) { showCurEnv $branch $cur_env }
-        } else {
-            helpAndExit
-        }
-    }
-    "acp" { 
-        $profile_name = "\ACPConversionAppSrv01\"
-        $profile_path += $profile_name
-        $cur_env = getCurrentEnvironment
-
-        if ($env -eq $cur_env) {
-            Write-Host $("Already in " + $cur_env)
-            $env = ""
-        } elseif ($env -eq "dev") {
-            $old_env = "acpt"
-        } elseif ($env -eq "acpt") {
-            $old_env = "dev"
-        } elseif ($env -eq "") {
-            if ($service -eq "") {showCurEnv $branch $cur_env}
-        } else {
-            helpAndExit
-        }
-    }
-    "release" {
-        $profile_name = "\AppSrv01Release\"
-        $profile_path += $profile_name
-        $cur_env = getCurrentEnvironment
-
-        if ($env -eq $cur_env) {
-            Write-Host $("Already in " + $cur_env)
-            $env = ""
-        } elseif ($env -eq "qa") {
-            $old_env = "prod"
-        } elseif ($env -eq "prod") {
-            prodCheck
-            $old_env = "qa"
-        } elseif ($env -eq "") {
-            if ($service -eq "" -and -not $easWeb) { showCurEnv $branch $cur_env }
-        } else {
-            helpAndExit
-        }
-    }
-    default {
-        helpAndExit
-    }
+$profile_path += $profile_name
+$cur_env = getCurrentEnvironment
+if ($env -eq $cur_env) {
+    Write-Host $("Already in " + $cur_env)
+    $env = ""
+} elseif ($env -eq "prod") {
+    prodCheck
+} elseif ($env -eq "") {
+    if ($service -eq "") { showCurEnv $branch $cur_env }
 }
 
 $ErrorActionPreference = "Stop"
@@ -316,15 +300,19 @@ try {
     backupFiles $profile_path
     backupFiles $($profile_path + $bin)
     if ($env -ne "") {
-        renameFiles $profile_path $old_env $env
-        switchEasEnv $profile_path $env $old_env
-        switchEasEnv $($profile_path + $bin) $env $old_env
+        renameFiles $profile_path $cur_env $env
+        switchEasEnv $profile_path $env $cur_env
+        switchEasEnv $($profile_path + $bin) $env $cur_env
         switchAtlantechEnv $env
     }
     if ($easWeb) { useLocalEasWeb }
     if ($service -ne "") {
         enableService $service $profile_path
         enableService $service $($profile_path + $bin)
+    }
+    if ($pm) { 
+        toggleProdProducerMgmt $profile_path 
+        toggleProdProducerMgmt $($profile_path + $bin)
     }
     if ($restart) {restartServer $profile_path}
     Remove-Item $($profile_path + "backup") -recurse

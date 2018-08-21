@@ -2,3 +2,4 @@ search_text_in_children.ps1
 testRegistryValue.ps1
 delete_list.txt
 delete_mail.log
+createSICInsertFromData.ps1

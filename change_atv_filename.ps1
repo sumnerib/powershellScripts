@@ -11,8 +11,14 @@ Param(
 
     [switch]$easWeb,
 
-    [switch]$pm
+    [switch]$pm,
+
+    [switch]$atvLink
 )
+
+# Constants
+Set-Variable LOCAL_EASWEB_LINE_NUM -Option Constant -Value 3
+Set-Variable LOCAL_ATV_LINE_NUM -Option Constant -Value 4
 
 function switchEasEnv($path, $new_env, $cur_env) {
 
@@ -47,13 +53,13 @@ function switchAtlantechEnv($new_env, $easWeb) {
     $ini_file_new > "C:\Apps\EAS Acpt\Atlantech.ini"
 }
 
-function useLocalEasWeb() {
-    
+function toggleAtlantechLine($line_num) {
+
     $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
-    if ($ini_file[3].IndexOf("#") -eq 0) {
-        $ini_file[3] = $ini_file[3].Replace("#", "")
+    if ($ini_file[$line_num].IndexOf("#") -eq 0) {
+        $ini_file[$line_num] = $ini_file[$line_num].Replace("#", "")
     } else {
-        $ini_file[3] = commentLine $ini_file[3]
+        $ini_file[$line_num] = commentLine $ini_file[$line_num]
     }
 
     $ini_file_new = ""
@@ -311,7 +317,8 @@ try {
         switchEasEnv $($profile_path + $bin) $env $cur_env
         switchAtlantechEnv $env
     }
-    if ($easWeb) { useLocalEasWeb }
+    if ($easWeb) { toggleAtlantechLine $LOCAL_EASWEB_LINE_NUM }
+    if ($atvLink) { toggleAtlantechLine $LOCAL_ATV_LINE_NUM }
     if ($service -ne "") {
         enableService $service $profile_path
         enableService $service $($profile_path + $bin)

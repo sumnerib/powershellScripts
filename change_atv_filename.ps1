@@ -48,8 +48,14 @@ function switchAtlantechEnv($new_env, $easWeb) {
 }
 
 function useLocalEasWeb() {
+    
     $ini_file = Get-Content "C:\Apps\EAS Acpt\Atlantech.ini"
-    $ini_file[3] = $ini_file[3].Replace("#", "")
+    if ($ini_file[3].IndexOf("#") -eq 0) {
+        $ini_file[3] = $ini_file[3].Replace("#", "")
+    } else {
+        $ini_file[3] = commentLine $ini_file[3]
+    }
+
     $ini_file_new = ""
     foreach ($line in $ini_file) {
         $ini_file_new += $($line + "`r`n")

@@ -4,7 +4,7 @@ Param(
     [string]$userEmail
 )
 
-Set-Location -Path "C:\Users\ibsumne\Notes\powershellScripts"
+Set-Location -Path "C:\Users\ibsumne\powershellScripts"
 
 if  ([bool](Get-Process OUTLOOK* -EA SilentlyContinue)) {
     Get-Process OUTLOOK* | Stop-Process -Force  

@@ -275,7 +275,7 @@ function showCurEnv($branch, $cur_env) {
 
 
 # Switches the properties files in order to change local Atvantage or Easweb environments
-$profile_path = "C:\Projects\IBM\WebSphere\AppServer\profiles\"
+$profile_path = "C:\IBM\WebSphere\AppServer\profiles\"
 $atvantage = "atvantage.properties"
 $bin = "bin\"
 $profile_name = ""

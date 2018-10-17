@@ -290,7 +290,7 @@ switch ($branch) {
     } 
     "main" { $profile_name = "\AppSrv01AtvMain\" }
     "acp" { $profile_name = "\ACPConversionAppSrv01\" }
-    "release" { $profile_name = "\AppSrv01Release\" }
+    "release" { $profile_name = "\AppSrv01AtvRelease\" }
     default { helpAndExit }
 }
 

@@ -313,11 +313,11 @@ try {
     backupFiles $($profile_path + $bin)
     if ($env -ne "") {
         renameFiles $profile_path $cur_env $env
-        switchEasEnv $profile_path $env $cur_env
-        switchEasEnv $($profile_path + $bin) $env $cur_env
+        #switchEasEnv $profile_path $env $cur_env
+        #switchEasEnv $($profile_path + $bin) $env $cur_env
         switchAtlantechEnv $env
     }
-    if ($easWeb) { toggleAtlantechLine $LOCAL_EASWEB_LINE_NUM }
+    #if ($easWeb) { toggleAtlantechLine $LOCAL_EASWEB_LINE_NUM }
     if ($atvLink) { toggleAtlantechLine $LOCAL_ATV_LINE_NUM }
     if ($service -ne "") {
         enableService $service $profile_path

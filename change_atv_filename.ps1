@@ -282,7 +282,7 @@ $profile_name = ""
 
 switch ($branch) {
     "next" {
-        $profile_name = "\AppSrv01Next\"
+        $profile_name = "\AppSrv01AtvNext\"
         if ($env -ne "") {
             $env = ""
             Write-Host "Ignoring -env when -branch is 'next'"

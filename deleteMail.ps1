@@ -62,6 +62,5 @@ for ($i=$($inbox.Items.count); $i -ge 1; $i--) { # 1-based collection
 }
 LogWrite -t -l $("Number of Items Deleted: " + $deleteCount) 
 
-if  ([bool](Get-Process OUTLOOK* -EA SilentlyContinue)) {
-    Get-Process OUTLOOK* | Stop-Process -Force  
-}
+# Restart Outlook
+Start-Process outlook.exe 

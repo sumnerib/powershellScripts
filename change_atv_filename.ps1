@@ -17,8 +17,8 @@ Param(
 )
 
 # Constants
-Set-Variable LOCAL_EASWEB_LINE_NUM -Option Constant -Value 3
-Set-Variable LOCAL_ATV_LINE_NUM -Option Constant -Value 4
+Set-Variable LOCAL_EASWEB_LINE_NUM -Option Constant -Value 3 -ErrorAction 'Ignore'
+Set-Variable LOCAL_ATV_LINE_NUM -Option Constant -Value 4 -ErrorAction 'Ignore'
 
 function switchEasEnv($path, $new_env, $cur_env) {
 
@@ -273,6 +273,25 @@ function showCurEnv($branch, $cur_env) {
     exit
 }
 
+function updateServiceIP($profile_path) {
+
+    $propertiesfile = Get-Content $($profile_path + "atvantage.properties")
+    $encoding = Get-FileEncoding $($profile_path + "atvantage.properties")
+    $propertiesfile = $propertiesfile | ForEach-Object { $_ + "`r`n" }
+    $ip = $(Get-NetIPAddress -AddressFamily "IPv4" -InterfaceAlias "Ethernet0").IPAddress
+    $serviceURL = $("http://" + $ip + ":9080")
+    $expression = "http://\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d+"
+
+    for ($i = 0; $i -lt $propertiesFile.length; $i++) {
+        if ($propertiesFile[$i].Contains("PRINT_SVC_URL_TEST") -or $propertiesfile[$i].Contains("WEBPRINT_SERVICE_ENDPOINT")) {            
+            $propertiesfile[$i] = $propertiesfile[$i] -replace $expression, $serviceURL
+        }
+    }
+
+    $outString = ""
+    $propertiesfile | ForEach-Object { $outString += $_ }
+    $outString | Set-Content -Path $($profile_path + "atvantage.properties") -Encoding $encoding
+}
 
 # Switches the properties files in order to change local Atvantage or Easweb environments
 $profile_path = "C:\IBM\WebSphere\AppServer\profiles\"
@@ -317,6 +336,8 @@ try {
         switchEasEnv $($profile_path + $bin) $env $cur_env
         switchAtlantechEnv $env
     }
+    updateServiceIP $profile_path
+    updateServiceIP $($profile_path + $bin)
     if ($easWeb) { toggleAtlantechLine $LOCAL_EASWEB_LINE_NUM }
     if ($atvLink) { toggleAtlantechLine $LOCAL_ATV_LINE_NUM }
     if ($service -ne "") {

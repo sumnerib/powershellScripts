@@ -16,7 +16,6 @@ Param(
     [switch]$terse
 )
 
-# Courtesy of: https://www.jonathanmedd.net/2014/02/testing-for-the-presence-of-a-registry-key-and-value.html
 function Test-RegistryValue {
     param (
     
@@ -27,12 +26,7 @@ function Test-RegistryValue {
         [ValidateNotNullOrEmpty()]$Value
     )
     
-    try {
-        Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop | Out-Null
-        return $true
-    } catch {
-        return $false
-    }
+    return (Get-Item $Path -ErrorAction Ignore).Property -contains $Value
 }
 
 $access_db_engine_msi = 'Microsoft Access database engine 2010 (English)'
@@ -52,7 +46,7 @@ function Remove-MSOIfExists {
 }
 
 function Repair-AfterPatch {
-   
+    
     if ($terse) { $ProgressPreference = 'SilentlyContinue' }
     if (Check-Command -cmdname 'Repair-MSIProduct') {
         Get-MSIProductInfo -Name $access_db_engine_msi | Repair-MSIProduct 

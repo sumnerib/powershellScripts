@@ -4,9 +4,19 @@ Param(
     [string]$userEmail
 )
 
+Add-Type -AssemblyName System.Windows.Forms
+
+function isReady {
+    return [System.Windows.Forms.MessageBox]::Show('Can Outlook be closed for Inbox cleaning?', "Question", 4)
+}
+
 Set-Location -Path "C:\Users\ibsumne\powershellScripts"
 
 if  ([bool](Get-Process OUTLOOK* -EA SilentlyContinue)) {
+
+    while ((isReady) -eq 'No') { 
+        Start-Sleep -Seconds 180 
+    }
     Get-Process OUTLOOK* | Stop-Process -Force  
 }
 
@@ -15,7 +25,7 @@ while ([bool](Get-Process OUTLOOK* -EA SilentlyContinue)) {
 }
 
 $Logfile = ".\delete_mail.log"
-Function LogWrite {
+function LogWrite {
     Param (
         [string]$logstring,
         [switch]$timestamp

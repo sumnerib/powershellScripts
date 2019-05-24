@@ -98,7 +98,7 @@ function enableService($service, $path) {
     } elseif ($service -eq "both") {
         $properties_file = enablePrint $properties_file
         $properties_file = enableRating $properties_file
-    } elseif ($service -eq "neither") {
+    } elseif ($service -eq "") {
         $properties_file = disablePrint $properties_file
         $properties_file = disableRating $properties_file
     } else {
@@ -340,10 +340,8 @@ try {
     updateServiceIP $($profile_path + $bin)
     if ($easWeb) { toggleAtlantechLine $LOCAL_EASWEB_LINE_NUM }
     if ($atvLink) { toggleAtlantechLine $LOCAL_ATV_LINE_NUM }
-    if ($service -ne "") {
-        enableService $service $profile_path
-        enableService $service $($profile_path + $bin)
-    }
+    enableService $service $profile_path
+    enableService $service $($profile_path + $bin)
     if ($pm) { 
         toggleProdProducerMgmt $profile_path 
         toggleProdProducerMgmt $($profile_path + $bin)

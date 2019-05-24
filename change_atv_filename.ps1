@@ -301,15 +301,15 @@ $profile_name = ""
 
 switch ($branch) {
     "next" {
-        $profile_name = "\AppSrv01AtvNext\"
+        $profile_name = "AppSrv01AtvNext\"
         if ($env -ne "") {
             $env = ""
             Write-Host "Ignoring -env when -branch is 'next'"
         }
     } 
-    "main" { $profile_name = "\AppSrv01AtvMain\" }
-    "acp" { $profile_name = "\ACPConversionAppSrv01\" }
-    "release" { $profile_name = "\AppSrv01AtvRelease\" }
+    "main" { $profile_name = "AppSrv01AtvMain\" }
+    "acp" { $profile_name = "ACPConversionAppSrv01\" }
+    "release" { $profile_name = "AppSrv01AtvRelease\" }
     default { helpAndExit }
 }
 

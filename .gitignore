@@ -4,3 +4,5 @@ delete_list.txt
 delete_mail.log
 createSICInsertFromData.ps1
 .vscode/
+singleUse/
+
